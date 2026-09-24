@@ -1,0 +1,7 @@
+{
+  "ssthresh": 32,
+  "rtt": 100.0,
+  "mss": 1460,
+  "loss_rate": 0.02,
+  "rounds": 100
+}

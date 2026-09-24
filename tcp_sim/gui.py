@@ -25,6 +25,7 @@ from tkinter import ttk, messagebox, filedialog
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from .config import SimulationConfig, DEFAULT_PARAMS, CONFIG_FILE, CSV_DIR, IMAGES_DIR, ensure_dirs
+from .database import SimulationDB
 from .engine import SimulationEngine
 from .plotter import CwndPlotter
 
@@ -50,15 +51,17 @@ class MainApp:
         self.root.geometry("1200x720")
         self.root.minsize(1000, 620)
 
-        # 确保三个专用目录存在（config / csv / images）
+        # 确保四个专用目录存在（config / csv / images / data）
         ensure_dirs()
 
         # 配置：启动时自动加载 config/config.json（文档 3.3.1 (7)）
         self.config = SimulationConfig.load_json(CONFIG_FILE)
 
-        # 引擎、绘图器与定时器
+        # 引擎、绘图器、数据库与定时器
         self.engine: SimulationEngine | None = None
         self.plotter = CwndPlotter()
+        self.db = SimulationDB()          # SQLite 自动存储（文档 2.1 / 4.2.2）
+        self._last_saved_sim_id: int | None = None
         self._after_id: str | None = None
         self._running = False
 
@@ -215,6 +218,7 @@ class MainApp:
         self._set_text(self.stats_text, "")
         self._set_text(self.event_text, "")
         self.progress.configure(value=0, maximum=100)
+        self._last_saved_sim_id = None
 
     def _on_start(self) -> None:
         if self._running:
@@ -287,6 +291,31 @@ class MainApp:
         self._refresh_events()
         if self.engine.is_finished():
             self._refresh_stats()
+            self._auto_save_to_db()
+
+    def _auto_save_to_db(self) -> None:
+        """仿真结束后自动保存到 SQLite（文档 2.1 / 4.2.2 数据记录管理）。
+
+        每次仿真只保存一次；保存成功后在统计区底部追加提示。
+        """
+        if self.engine is None or self._last_saved_sim_id is not None:
+            return
+        try:
+            stats = self.engine.compute_stats()
+            sim_id = self.db.save_simulation(
+                config=self.engine.config,
+                stats=stats,
+                records=self.engine.recorder.records,
+                events=self.engine.recorder.events,
+            )
+            self._last_saved_sim_id = sim_id
+            tip = f"\n\n已自动保存到 SQLite 数据库（记录 ID #{sim_id}）\n文件位置：data/simulation.db"
+        except Exception as exc:  # 数据库异常不打断用户，只做提示
+            tip = f"\n\nSQLite 自动保存失败：{exc}"
+
+        self.stats_text.configure(state="normal")
+        self.stats_text.insert(tk.END, tip)
+        self.stats_text.configure(state="disabled")
 
     def _refresh_status(self, reset: bool = False) -> None:
         if reset or self.engine is None:
@@ -380,6 +409,7 @@ class MainApp:
                 config.save_json(CONFIG_FILE)
         except (OSError, ValueError):
             pass
+        self.db.close()
         self.root.destroy()
 
 

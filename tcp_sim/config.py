@@ -44,18 +44,22 @@ if getattr(sys, "frozen", False):
 else:
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# 三个专用存放目录：配置 / CSV / 仿真图片
+# 四个专用存放目录：配置 / CSV / 仿真图片 / SQLite 数据库
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
 CSV_DIR = os.path.join(BASE_DIR, "csv")
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
+DATA_DIR = os.path.join(BASE_DIR, "data")
 
 # 配置文件路径：config/config.json
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
+# SQLite 数据库文件路径：data/simulation.db
+DB_FILE = os.path.join(DATA_DIR, "simulation.db")
+
 
 def ensure_dirs() -> None:
-    """确保三个专用目录存在（不存在则创建）。"""
-    for directory in (CONFIG_DIR, CSV_DIR, IMAGES_DIR):
+    """确保四个专用目录存在（不存在则创建）。"""
+    for directory in (CONFIG_DIR, CSV_DIR, IMAGES_DIR, DATA_DIR):
         os.makedirs(directory, exist_ok=True)
 
 

@@ -71,3 +71,16 @@ TCP/
 
 网络模拟器按 `random() < loss_rate` 判定丢包；当 `cwnd >= 4` 时部分丢包表现为三重重复 ACK
 （其余为超时），从而同时演示两种拥塞信号。
+
+## 打包发布（PyInstaller）
+
+```bash
+pip install pyinstaller
+pyinstaller --noconfirm --clean --onefile --windowed --name TCP main.py
+```
+
+- 生成 `dist/TCP.exe`（单文件免安装便携版，约 50 MB）。
+- 打包后程序会在 exe 所在目录自动创建 `config/`、`csv/`、`images/` 三个文件夹
+  （代码通过 `sys.frozen` 判断运行环境，自动切换路径基准）。
+- 发布时把 `TCP.exe` 与使用说明一起压缩成 zip 即可。
+

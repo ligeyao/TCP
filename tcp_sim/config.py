@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from dataclasses import dataclass, asdict
 
 # 参数取值范围
@@ -36,7 +37,12 @@ DEFAULT_PARAMS = {
 }
 
 # 项目根目录（TCP/）
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# 打包成 exe 后（sys.frozen=True），以 exe 所在目录为根目录，
+# 这样 config/csv/images 三个文件夹会生成在 exe 旁边，便于便携使用。
+if getattr(sys, "frozen", False):
+    BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 三个专用存放目录：配置 / CSV / 仿真图片
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
